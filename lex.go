@@ -3,7 +3,7 @@ package lex
 import "github.com/aws/aws-lambda-go/events"
 
 type Event struct {
-	events.LexEvent
+	*events.LexEvent
 }
 
 type Response struct {
@@ -15,19 +15,19 @@ func (e *Event) Delegate() *Response {
 	return &Response{
 		DialogAction: events.LexDialogAction{
 			Type:  "Delegate",
-			Slots: e.DialogAction.Slots,
+			Slots: e.CurrentIntent.Slots,
 		},
 		SessionAttributes: e.SessionAttributes,
 	}
 }
 
-func (e *Event) Close(m string) *Response {
+func (e *Event) Close(msg string) *Response {
 	return &Response{
 		DialogAction: events.LexDialogAction{
 			Type:             "Close",
 			FulfillmentState: "Fulfilled",
 			Message: map[string]string{
-				"content":     m,
+				"content":     msg,
 				"contentType": "PlainText",
 			},
 		},
@@ -35,14 +35,14 @@ func (e *Event) Close(m string) *Response {
 	}
 }
 
-func (e *Event) ConfirmIntent(m string) *Response {
+func (e *Event) ConfirmIntent(msg string) *Response {
 	return &Response{
 		DialogAction: events.LexDialogAction{
 			Type:       "ConfirmIntent",
-			IntentName: e.DialogAction.IntentName,
-			Slots:      e.DialogAction.Slots,
+			IntentName: e.CurrentIntent.Name,
+			Slots:      e.CurrentIntent.Slots,
 			Message: map[string]string{
-				"content":     m,
+				"content":     msg,
 				"contentType": "PlainText",
 			},
 		},
@@ -50,19 +50,19 @@ func (e *Event) ConfirmIntent(m string) *Response {
 	}
 }
 
-func (e *Event) ElicitSlot(m string) *Response {
+func (e *Event) ElicitSlot(slot, msg string) *Response {
 	return &Response{
 		DialogAction: events.LexDialogAction{
 			Type:         "ElicitSlot",
-			IntentName:   e.DialogAction.IntentName,
-			Slots:        e.DialogAction.Slots,
-			SlotToElicit: e.DialogAction.SlotToElicit,
+			IntentName:   e.CurrentIntent.Name,
+			Slots:        e.CurrentIntent.Slots,
+			SlotToElicit: slot,
 			Message: map[string]string{
-				"content":     m,
+				"content":     msg,
 				"contentType": "PlainText",
 			},
 		},
-		SessionAttributes: event.SessionAttributes,
+		SessionAttributes: e.SessionAttributes,
 	}
 }
 
